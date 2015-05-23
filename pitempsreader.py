@@ -37,13 +37,14 @@ import signal
 import os
 import time
 
-global clean_state
-global shutdown_flag
+#clean_state
+#shutdown_flag
 clean_state = True
 shutdown_flag = False
 
 def signal_handler(signum, frame):
     print 'PiTempsReader: Received signal',signum,'exiting...'
+    clearLCD_shutdown()
     if clean_state: exit()
     global shutdown_flag
     shutdown_flag = True
@@ -65,9 +66,13 @@ def writeToFile(f,t):
         f.write(t)
 
 def updateLCD(tin,tout,humout):
-    message = 'In : {0}\x00C\nOut: {1}\x00C/{2}%\n\nLocal time: {3}'
+    message = 'In : {0}\x00C\nOut: {1}\x00C/{2}%\n\n{3}'
     lcd.clear()
-    lcd.message(message.format(tin, tout, humout, time.strftime('%H:%M')))
+    lcd.message(message.format(tin, tout, humout, time.strftime('%d.%m.%Y %H:%M')))
+
+def clearLCD_shutdown():
+    lcd.clear()
+    lcd.message('Shutted down at:\n{0}'.format(time.strftime('%d.%m.%Y %H:%M')))
 
 # Catch a SIGTERM signal if sent and
 # exit cleanly
@@ -116,7 +121,7 @@ lcd.clear()
 
 # Note that sometimes you won't get a reading and
 # the results will be null (because Linux can't
-# guarantee the timing of calls to read the sensor).  
+# guarantee the timing of calls to read the sensor).
 # If this happens try again!
 
 # We could store the last iterations values here, and check the new ones against
