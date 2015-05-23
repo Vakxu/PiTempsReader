@@ -37,10 +37,9 @@ import signal
 import os
 import time
 
-#clean_state
-#shutdown_flag
 clean_state = True
 shutdown_flag = False
+temps_in,temps_out = [], []
 
 def signal_handler(signum, frame):
     print 'PiTempsReader: Received signal',signum,'exiting...'
@@ -73,6 +72,15 @@ def updateLCD(tin,tout,humout):
 def clearLCD_shutdown():
     lcd.clear()
     lcd.message('Shutted down at:\n{0}'.format(time.strftime('%d.%m.%Y %H:%M')))
+
+def update_temps_lists(lin, tin, lout, tout):
+    # Store a 2 hour long history of temps
+    def limit_history(l):
+        if len(l) > 120: del l[0]
+    lin.append(float(tin))
+    lout.append(float(tout))
+    limit_history(lin)
+    limit_history(lout)
 
 # Catch a SIGTERM signal if sent and
 # exit cleanly
@@ -124,10 +132,6 @@ lcd.clear()
 # guarantee the timing of calls to read the sensor).
 # If this happens try again!
 
-# We could store the last iterations values here, and check the new ones against
-# them and discard the new val if they diff heavily. What if first values are off?
-#lastTempInside, lastTemp, lastHumidity = None, None, None
-
 while True:
     humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
     inside = sensor2.read_temperature()
@@ -136,13 +140,13 @@ while True:
 	humidity = "{0:0.2f}".format(humidity)
 	outside = temperature + "\n" + humidity
 	inside = "{0:0.2f}".format(inside)
+	update_temps_lists(temps_in, inside, temps_out, temperature)
 	updateLCD(inside,temperature,humidity)
 	clean_state = False
 	writeToFile(fout, outside)
 	writeToFile(fin, inside)
 	clean_state = True
 	if shutdown_flag: break
-	#lastTemp, lastTempInside, lastHumidity = temperature, inside, humidity
     else:
 	pass
     # update temps once per minute
