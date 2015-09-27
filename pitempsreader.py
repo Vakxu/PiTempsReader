@@ -64,17 +64,38 @@ def writeToFile(f,t):
     with open(f, 'w') as f:
         f.write(t)
 
+def build_bar(value):
+    #CHAR_WIDTH = 20
+    #BAR_WIDTH = CHAR_WIDTH - 4
+    bar_width = lcd_columns - 4
+
+    min_val, max_val = 21.0, 26.0
+    star_indx = int(round((float(value) - min_val) / (max_val + 0.17 - min_val) * bar_width + 2))
+
+    str_chars = ['_' for _ in range(lcd_columns)]
+    str_chars[0] = str(min_val)[0]
+    str_chars[1] = str(min_val)[1]
+    str_chars[18] = str(max_val)[0]
+    str_chars[19] = str(max_val)[1]
+
+    try:
+        str_chars[star_indx] = '*'
+    except:
+        return 'Value out of indx bo'
+
+    return ''.join(str_chars)
+
 def updateLCD(tin,tout,humout):
-    message = 'In : {0}\x00C\nOut: {1}\x00C/{2}%\n\n{3}'
+    message = 'In : {0}\x00C\n{1}\nOut: {2}\x00C/{3}%\n{4}'
     lcd.clear()
-    lcd.message(message.format(tin, tout, humout, time.strftime('%d.%m.%Y %H:%M')))
+    lcd.message(message.format(tin, build_bar(tin), tout, humout, time.strftime('%d.%m.%Y %H:%M')))
 
 def clearLCD_shutdown():
     lcd.clear()
     lcd.message('Shutted down at:\n{0}'.format(time.strftime('%d.%m.%Y %H:%M')))
 
 def update_temps_lists(lin, tin, lout, tout):
-    # Store a 2 hour long history of temps
+    # Store an 2 hour long history of temps
     def limit_history(l):
         if len(l) > 120: del l[0]
     lin.append(float(tin))
